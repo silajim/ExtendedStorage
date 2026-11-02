@@ -1,5 +1,23 @@
+> Work in progress: this RimWorld 1.6 port has a reported unresolved bug. It is published for development and is not ready for an upstream pull request or release.
+
+# Local RimWorld 1.6 port
+
+This working copy adds RimWorld 1.6 support to the archived upstream mod.
+Install the entire mod folder and use Harmony, Extended Storage, then Extended Storage Extended in that order.
+Use one copy of each mod; package IDs and definition names are unchanged for save continuity.
+The original 1.5 and earlier content is retained in its version folders.
+
+The source project targets .NET Framework 4.8 and RimWorld 1.6.4871.
+Build with `dotnet build Source/ExtendedStorage/ExtendedStorage.csproj -c Release`.
+The resulting DLL is written to `1.6/Assemblies`; the Harmony DLL is supplied by the Harmony mod.
+
+See the workspace `PORT-1.6.md` for changes, runtime checks, and known validation limits.
+
+---
+
 # [[Abandoned] Extended Storage (Continued)](https://steamcommunity.com/sharedfiles/filedetails/?id=2566120724)
-
+
+
 ![Image](https://img.litet.net/logos/Info.png)
 
 Update of Skullywag, Fluffy, spdskatr, DoctorVanGogh, Terraggs mod

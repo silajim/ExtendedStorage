@@ -25,19 +25,8 @@ internal static class StorageUtility
     public static void SplitOfStackInto(Thing existingThing, IntVec3 targetLocation)
     {
         var map = existingThing.Map;
-        var thing = ThingMaker.MakeThing(existingThing.def, existingThing.Stuff);
-        thing.HitPoints = existingThing.HitPoints;
-        if (existingThing.stackCount > existingThing.def.stackLimit)
-        {
-            existingThing.stackCount -= existingThing.def.stackLimit;
-            thing.stackCount = existingThing.def.stackLimit;
-        }
-        else
-        {
-            thing.stackCount = existingThing.stackCount;
-            existingThing.Destroy();
-        }
-
+        // Split the original object to retain corpse contents, quality, and other comp data.
+        var thing = existingThing.SplitOff(System.Math.Min(existingThing.stackCount, existingThing.def.stackLimit));
         GenSpawn.Spawn(thing, targetLocation, map);
     }
 

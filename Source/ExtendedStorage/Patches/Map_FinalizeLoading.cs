@@ -18,15 +18,14 @@ internal class Map_FinalizeLoading
     {
         var list = new List<CodeInstruction>(instr);
         var num = list.FindIndex(ci => ci.opcode == OpCodes.Call && (MethodInfo)ci.operand == mi);
-        if (num == -1)
+        if (num == -1 || num + 1 >= list.Count || !list[num + 1].IsLdloc())
         {
-            Log.Warning("Could not find Map_FinalizeLoading transpiler anchor - not patching.");
-            return list;
+            throw new InvalidOperationException("Extended Storage: could not find the map-loading thing list.");
         }
 
         list.InsertRange(num + 1, new[]
         {
-            new CodeInstruction(OpCodes.Ldloc_1),
+            new CodeInstruction(list[num + 1].opcode, list[num + 1].operand),
             new CodeInstruction(OpCodes.Ldarg_0),
             new CodeInstruction(OpCodes.Call,
                 typeof(Map_FinalizeLoading).GetMethod("PrioritySpawnStorageBuildings"))
@@ -41,6 +40,10 @@ internal class Map_FinalizeLoading
             try
             {
                 GenSpawn.SpawnBuildingAsPossible(building_ExtendedStorage, map, true);
+                if (building_ExtendedStorage.Spawned)
+                {
+                    things.Remove(building_ExtendedStorage);
+                }
             }
             catch (Exception ex)
             {
@@ -48,7 +51,6 @@ internal class Map_FinalizeLoading
                     $"Exception spawning loaded thing {building_ExtendedStorage.ToStringSafe<Building>()}: {ex}");
             }
 
-            things.Remove(building_ExtendedStorage);
         }
     }
 }

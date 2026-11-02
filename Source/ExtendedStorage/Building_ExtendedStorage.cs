@@ -48,11 +48,13 @@ public class Building_ExtendedStorage : Building_Storage, IUserSettingsOwner
         get => _storedThingDef;
         set
         {
-            _storedThingDef = value;
-            if (_storedThingDef != value)
+            if (_storedThingDef == value)
             {
-                Notify_StoredThingDefChanged();
+                return;
             }
+
+            _storedThingDef = value;
+            Notify_StoredThingDefChanged();
         }
     }
 
@@ -80,7 +82,7 @@ public class Building_ExtendedStorage : Building_Storage, IUserSettingsOwner
             var map = Map;
             if (map == null)
             {
-                return null;
+                return Enumerable.Empty<Thing>();
             }
 
             return from t in map.thingGrid.ThingsAt(OutputSlot)
@@ -272,10 +274,10 @@ public class Building_ExtendedStorage : Building_Storage, IUserSettingsOwner
 
     public override void SpawnSetup(Map map, bool respawningAfterLoad)
     {
-        base.SpawnSetup(map, respawningAfterLoad);
         var list = GenAdj.CellsOccupiedBy(this).ToList();
         InputSlot = list[0];
         OutputSlot = list[1];
+        base.SpawnSetup(map, respawningAfterLoad);
         if (label == null || label.Trim().Length == 0)
         {
             label = InitialLabel();
@@ -309,7 +311,7 @@ public class Building_ExtendedStorage : Building_Storage, IUserSettingsOwner
                 : "ExtendedStorage.NA".Translate(), null, -2);
     }
 
-    public override void Tick()
+    protected override void Tick()
     {
         base.Tick();
         if (!this.IsHashIntervalTick(10))
@@ -475,13 +477,8 @@ public class Building_ExtendedStorage : Building_Storage, IUserSettingsOwner
     private void SplurgeThings(IEnumerable<Thing> things, IntVec3 center, bool forceSplurge = false)
     {
         using var enumerator = GenRadial.RadialCellsAround(center, 20f, false).GetEnumerator();
-        foreach (var thing in things)
+        foreach (var thing in things.ToList())
         {
-            if (thing.TryGetComp<CompQuality>() != null)
-            {
-                continue;
-            }
-
             while (!thing.DestroyedOrNull())
             {
                 if (!forceSplurge && thing.stackCount <= thing.def.stackLimit)
@@ -489,14 +486,21 @@ public class Building_ExtendedStorage : Building_Storage, IUserSettingsOwner
                     break;
                 }
 
-                if (!EnumUtility.TryGetNext(enumerator, c => c.Standable(Map), out var targetLocation))
+                if (!EnumUtility.TryGetNext(enumerator,
+                        c => c.Standable(Map) && c.GetItemCount(Map) < c.GetMaxItemsAllowedInCell(Map),
+                        out var targetLocation))
                 {
                     Log.Warning(
                         $"Ran out of cells to splurge {thing.LabelCap} - there might be issues on save/reload.");
                     return;
                 }
 
+                var movingWholeStack = thing.stackCount <= thing.def.stackLimit;
                 StorageUtility.SplitOfStackInto(thing, targetLocation);
+                if (movingWholeStack)
+                {
+                    break;
+                }
             }
         }
     }
@@ -540,6 +544,11 @@ public class Building_ExtendedStorage : Building_Storage, IUserSettingsOwner
 
     internal void TrySplurgeStoredItems()
     {
+        if (!Spawned)
+        {
+            return;
+        }
+
         var storedThings = StoredThings;
         if (storedThings == null)
         {

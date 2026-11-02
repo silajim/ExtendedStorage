@@ -2,6 +2,12 @@
 
 # RimWorld 1.6 local ports
 
+## Deep Storage compatibility correction
+
+When Stockpile Limit marks a shelf as over capacity, Deep Storage can re-enter `MapComponentDS.UpdateCache` from a hauling check before the first `CellCache` constructor has returned. The 1.6 assembly now guards cache construction per map component, cell, and thread. Nested queries use Deep Storage's existing direct-capacity fallback. The guard is removed even when construction throws; storage limits and exceptions are not suppressed. The optional patch is skipped when Deep Storage is absent.
+
+An isolated RimWorld 1.6.4871 run reproduced the original recursion at bounded depth with 75 steel and a five-item shelf limit. With the fix, cache construction, the five-item limit, mass limits, exception cleanup, and save/reload passed. Reproduction sources and a runner are in `Tests/RuntimeChecks` and `Validate-Mods.ps1`.
+
 Updated local copies of emipa606/ExtendedStorage and emipa606/ExtendedStorageExtended.
 Upstream snapshots: ExtendedStorage `344412d`; ExtendedStorageExtended `05b9101`.
 

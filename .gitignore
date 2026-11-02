@@ -235,3 +235,6 @@ $RECYCLE.BIN/
 # Rimworld specific
 _PublisherPlus.xml
 lastrun.log
+
+# Isolated local runtime-check installation, profiles and game files
+.validation/
